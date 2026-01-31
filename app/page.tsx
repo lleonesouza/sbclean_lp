@@ -2,11 +2,37 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+
+const recomendacoes = [
+  { quote: "Atendimento excelente e o sofá ficou como novo. Recomendo muito!", name: "Maria S.", service: "Higienização de sofá" },
+  { quote: "Profissionais pontuais e o resultado superou minhas expectativas.", name: "João P.", service: "Estofados em geral" },
+  { quote: "Preço justo e serviço de qualidade. Voltarei a contratar.", name: "Ana L.", service: "Sofá e cadeiras" },
+  { quote: "Tinha alergia e depois da limpeza melhorei muito. O sofá está impecável.", name: "Roberto M.", service: "Higienização completa" },
+  { quote: "Fizeram a impermeabilização e agora fico tranquila com as crianças.", name: "Carla F.", service: "Impermeabilização de sofá" },
+  { quote: "Rápido, limpo e muito profissional. Nota 10!", name: "Paulo R.", service: "Sofá e poltronas" },
+  { quote: "Orçamento claro e serviço entregue no prazo. Recomendo.", name: "Fernanda T.", service: "Estofados" },
+  { quote: "O cheiro de limpeza sumiu em poucos dias e o tecido ficou macio.", name: "Luciana K.", service: "Higienização de sofá" },
+];
 
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
   const whatsappNumber = "5511999999999"; // Substitua pelo número real
+
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const card = el.querySelector("[data-carousel-card]");
+      const cardWidth = (card?.getBoundingClientRect().width ?? 0) + 24;
+      const index = Math.round(el.scrollLeft / cardWidth);
+      setCarouselIndex(Math.min(Math.max(0, index), recomendacoes.length - 1));
+    };
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
   const whatsappMessage = encodeURIComponent("Olá! Gostaria de solicitar um orçamento para higienização de estofados.");
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
@@ -15,8 +41,8 @@ export default function Home() {
     { href: "#problema", label: "O Problema" },
     { href: "#solucao", label: "A Solução" },
     { href: "#beneficios", label: "Benefícios" },
-    { href: "#publico", label: "Para Quem" },
-    { href: "#porque", label: "Por Que Escolher" },
+    { href: "#impermeabilizacao", label: "Impermeabilização" },
+    { href: "#recomendacoes", label: "Recomendações" },
     { href: "#como-funciona", label: "Como Funciona" },
     { href: "#duvidas", label: "Dúvidas" },
     { href: "#contato", label: "Contato" },
@@ -31,21 +57,58 @@ export default function Home() {
     }
   };
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "LocalBusiness",
+        "@id": "https://sbclean.com.br/#organization",
+        name: "SBClean",
+        description: "Higienização profissional de estofados e limpeza de sofá. Lavagem a seco, eliminação de ácaros, bactérias e odores. Impermeabilização de sofás.",
+        url: "https://sbclean.com.br",
+        telephone: whatsappNumber.replace(/\D/g, "").length >= 10 ? `+${whatsappNumber.replace(/\D/g, "")}` : undefined,
+        areaServed: "Brasil",
+        priceRange: "$$",
+        contactPoint: {
+          "@type": "ContactPoint",
+          contactType: "customer service",
+          availableLanguage: "Portuguese",
+          areaServed: "BR",
+          url: whatsappLink,
+        },
+      },
+      {
+        "@type": "Service",
+        name: "Limpeza de Sofá e Higienização de Estofados",
+        description: "Limpeza profissional de sofá e estofados. Higienização profunda que elimina bactérias, ácaros e odores. Lavagem a seco, impermeabilização e sanitização. Atendimento no local.",
+        provider: { "@id": "https://sbclean.com.br/#organization" },
+        serviceType: "Higienização de Estofados",
+        keywords: "limpeza de sofá, higienização de estofados, lavagem a seco, impermeabilização de sofá",
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-1.5">
-          <div className="flex items-center justify-between">
-            <Link href="#inicio" onClick={(e) => handleNavClick(e, "#inicio")}>
-              <Image
-                src="/logo-sbclean.png"
-                alt="SBClean Logo"
-                width={100}
-                height={40}
-                className="h-auto"
-                priority
-              />
+        <div className="container mx-auto px-4 h-20 flex items-center">
+          <div className="flex items-center justify-between w-full">
+            <Link href="#inicio" onClick={(e) => handleNavClick(e, "#inicio")} className="flex items-center justify-center h-[72px] w-36 shrink-0 overflow-hidden">
+              <span className="inline-block h-12 w-auto origin-center scale-150 [&>img]:h-12 [&>img]:w-auto">
+                <Image
+                  src="/logo_draw.png"
+                  alt="SBClean Logo"
+                  width={96}
+                  height={48}
+                  className="h-12 w-auto object-contain"
+                  priority
+                />
+              </span>
             </Link>
             
             {/* Desktop Navigation */}
@@ -112,13 +175,14 @@ export default function Home() {
         </div>
       </header>
 
+      <main>
       {/* Hero Section */}
-      <section id="inicio" className="relative min-h-[600px] md:min-h-[700px] flex items-center">
+      <section id="inicio" aria-label="Início" className="relative min-h-[600px] md:min-h-[700px] flex items-center">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
             src="/hero.jpg"
-            alt="Higienização de Estofados"
+            alt="Limpeza de sofá e higienização profissional de estofados - SBClean"
             fill
             className="object-cover"
             priority
@@ -132,17 +196,17 @@ export default function Home() {
         <div className="relative z-10 container mx-auto px-4 py-20">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              🛋️ Higienização Profissional de Estofados
+              Higienização Profissional de Estofados
             </h1>
             <p className="text-xl md:text-2xl text-white/95 mb-8 leading-relaxed">
               Limpeza profunda que elimina bactérias, ácaros e odores, deixando seu estofado limpo, seguro e renovado.
             </p>
             <div className="space-y-3 mb-8">
               <p className="text-lg md:text-xl text-white/90">
-                👉 Mais saúde, conforto e tranquilidade para sua família
+                Mais saúde, conforto e tranquilidade para sua família
               </p>
               <p className="text-lg md:text-xl text-white/90">
-                📲 Solicite agora seu orçamento pelo WhatsApp
+                Solicite agora seu orçamento pelo WhatsApp
               </p>
             </div>
             <Link
@@ -151,7 +215,7 @@ export default function Home() {
               rel="noopener noreferrer"
               className="inline-block bg-[#25D366] hover:bg-[#20BA5A] text-white text-xl font-bold px-8 py-4 rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105"
             >
-              📲 Solicitar Orçamento Agora
+              Solicitar Orçamento Agora
             </Link>
           </div>
         </div>
@@ -159,34 +223,47 @@ export default function Home() {
 
       {/* Problem Section */}
       <section id="problema" className="py-16 px-4 bg-gray-50 scroll-mt-16">
-        <div className="container mx-auto max-w-4xl">
+        <div className="container mx-auto max-w-6xl">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">
-            ❌ Seu estofado parece limpo, mas você sente que não está?
+            Seu estofado parece limpo, mas você sente que não está?
           </h2>
-          <p className="text-lg text-gray-700 mb-6 leading-relaxed">
-            Você já percebeu que, mesmo passando pano ou usando produtos comuns, o estofado continua com:
-          </p>
-          <ul className="space-y-4 mb-8">
-            <li className="flex items-start gap-3">
-              <span className="text-2xl">•</span>
-              <span className="text-lg text-gray-700">Manchas que não saem</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-2xl">•</span>
-              <span className="text-lg text-gray-700">Cheiro desagradável</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-2xl">•</span>
-              <span className="text-lg text-gray-700">Sensação de sujeira invisível</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-2xl">•</span>
-              <span className="text-lg text-gray-700">Medo de ácaros, bactérias e alergias</span>
-            </li>
-          </ul>
-          <p className="text-lg text-gray-800 font-semibold leading-relaxed">
-            Isso é normal. A sujeira mais perigosa não é visível e fica acumulada profundamente no tecido, colocando em risco a saúde da sua família — principalmente se você tem crianças, bebês ou pessoas alérgicas.
-          </p>
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="relative h-[400px] md:h-[500px] rounded-xl overflow-hidden shadow-xl order-2 md:order-1">
+              <Image
+                src="/real_cleaning.jpeg"
+                alt="Diferença entre área limpa e área com sujeira acumulada no estofado"
+                fill
+                className="object-cover"
+                quality={90}
+              />
+            </div>
+            <div className="order-1 md:order-2">
+              <p className="text-lg text-gray-700 mb-6 leading-relaxed">
+                Você já percebeu que, mesmo passando pano ou usando produtos comuns, o estofado continua com:
+              </p>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-start gap-3">
+                  <span className="text-2xl">•</span>
+                  <span className="text-lg text-gray-700">Manchas que não saem</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-2xl">•</span>
+                  <span className="text-lg text-gray-700">Cheiro desagradável</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-2xl">•</span>
+                  <span className="text-lg text-gray-700">Sensação de sujeira invisível</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-2xl">•</span>
+                  <span className="text-lg text-gray-700">Medo de ácaros, bactérias e alergias</span>
+                </li>
+              </ul>
+              <p className="text-lg text-gray-800 font-semibold leading-relaxed">
+                Isso é normal. A sujeira mais perigosa não é visível e fica acumulada profundamente no tecido, colocando em risco a saúde da sua família — principalmente se você tem crianças, bebês ou pessoas alérgicas.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -194,7 +271,7 @@ export default function Home() {
       <section id="solucao" className="py-16 px-4 bg-blue-50 scroll-mt-16">
         <div className="container mx-auto max-w-6xl">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">
-            ✅ A solução é uma higienização profissional e profunda
+            A solução é uma higienização profissional e profunda
           </h2>
           <div className="grid md:grid-cols-2 gap-8 items-center mb-8">
             <div>
@@ -206,16 +283,16 @@ export default function Home() {
               </p>
               <div className="grid grid-cols-1 gap-4">
                 <div className="bg-white p-4 rounded-lg shadow-md">
-                  <p className="text-lg font-semibold text-gray-800">✨ Limpeza profunda</p>
+                  <p className="text-lg font-semibold text-gray-800">Limpeza profunda</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow-md">
-                  <p className="text-lg font-semibold text-gray-800">🦠 Eliminação de bactérias, ácaros e microrganismos</p>
+                  <p className="text-lg font-semibold text-gray-800">Eliminação de bactérias, ácaros e microrganismos</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow-md">
-                  <p className="text-lg font-semibold text-gray-800">🌬️ Neutralização de odores</p>
+                  <p className="text-lg font-semibold text-gray-800">Neutralização de odores</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow-md">
-                  <p className="text-lg font-semibold text-gray-800">🛡️ Preservação do tecido</p>
+                  <p className="text-lg font-semibold text-gray-800">Preservação do tecido</p>
                 </div>
               </div>
             </div>
@@ -239,49 +316,51 @@ export default function Home() {
       <section id="beneficios" className="py-16 px-4 bg-white scroll-mt-16">
         <div className="container mx-auto max-w-6xl">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">
-            ✨ Benefícios que você sente na prática
+            Benefícios que você sente na prática
           </h2>
           <p className="text-lg text-gray-700 mb-8 text-center">
             Após a higienização, você percebe:
           </p>
           <div className="grid md:grid-cols-2 gap-8 items-center mb-8">
             <div className="relative h-[500px] rounded-lg overflow-hidden shadow-xl order-2 md:order-1">
-              <Image
-                src="/sofa_clean_2.jpg"
-                alt="Ambiente limpo e saudável após higienização"
-                fill
-                className="object-cover"
-                quality={90}
-              />
+              <video
+                src="/cleaning_with_machine.mp4"
+                controls
+                playsInline
+                className="w-full h-full object-cover"
+                poster="/sofa_clean.jpg"
+              >
+                Seu navegador não suporta vídeos.
+              </video>
             </div>
             <div className="order-1 md:order-2">
               <div className="grid grid-cols-1 gap-4">
                 <div className="flex items-start gap-3 bg-white p-4 rounded-lg shadow-sm">
-                  <span className="text-green-600 text-xl">✔️</span>
+                  <span className="text-green-600 text-xl">✓</span>
                   <span className="text-lg text-gray-700">Estofado realmente limpo e higienizado</span>
                 </div>
                 <div className="flex items-start gap-3 bg-white p-4 rounded-lg shadow-sm">
-                  <span className="text-green-600 text-xl">✔️</span>
+                  <span className="text-green-600 text-xl">✓</span>
                   <span className="text-lg text-gray-700">Ambiente mais saudável</span>
                 </div>
                 <div className="flex items-start gap-3 bg-white p-4 rounded-lg shadow-sm">
-                  <span className="text-green-600 text-xl">✔️</span>
+                  <span className="text-green-600 text-xl">✓</span>
                   <span className="text-lg text-gray-700">Redução de alergias e problemas respiratórios</span>
                 </div>
                 <div className="flex items-start gap-3 bg-white p-4 rounded-lg shadow-sm">
-                  <span className="text-green-600 text-xl">✔️</span>
+                  <span className="text-green-600 text-xl">✓</span>
                   <span className="text-lg text-gray-700">Cheiro agradável e sensação de frescor</span>
                 </div>
                 <div className="flex items-start gap-3 bg-white p-4 rounded-lg shadow-sm">
-                  <span className="text-green-600 text-xl">✔️</span>
+                  <span className="text-green-600 text-xl">✓</span>
                   <span className="text-lg text-gray-700">Aparência renovada</span>
                 </div>
                 <div className="flex items-start gap-3 bg-white p-4 rounded-lg shadow-sm">
-                  <span className="text-green-600 text-xl">✔️</span>
+                  <span className="text-green-600 text-xl">✓</span>
                   <span className="text-lg text-gray-700">Mais conforto no dia a dia</span>
                 </div>
                 <div className="flex items-start gap-3 bg-white p-4 rounded-lg shadow-sm">
-                  <span className="text-green-600 text-xl">✔️</span>
+                  <span className="text-green-600 text-xl">✓</span>
                   <span className="text-lg text-gray-700">Economia, evitando a troca do estofado</span>
                 </div>
               </div>
@@ -293,106 +372,177 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Target Audience Section */}
-      <section id="publico" className="py-16 px-4 bg-blue-50 scroll-mt-16">
-        <div className="container mx-auto max-w-4xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">
-            👨‍👩‍👧‍👦 Para quem esse serviço é ideal?
+      {/* Before & After Section */}
+      <section id="antes-depois" className="py-16 px-4 bg-white scroll-mt-16">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 text-center">
+            Antes e Depois
           </h2>
-          <p className="text-lg text-gray-700 mb-8 text-center">
-            Esse serviço é perfeito para:
+          <p className="text-lg text-gray-700 mb-12 text-center max-w-2xl mx-auto">
+            Veja a transformação que nossa higienização profissional faz nos estofados.
           </p>
-          <div className="grid md:grid-cols-2 gap-4 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow">
-              <p className="text-lg font-semibold text-gray-800">👶 Famílias com crianças ou bebês</p>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="relative rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+              <div className="aspect-[3/4] relative">
+                <Image
+                  src="/antes_depois_cleaning_sofa.jpeg"
+                  alt="Antes e depois da higienização de estofado"
+                  fill
+                  className="object-cover"
+                  quality={90}
+                />
+              </div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow">
-              <p className="text-lg font-semibold text-gray-800">🤧 Pessoas alérgicas ou sensíveis a ácaros</p>
+            <div className="relative rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+              <div className="aspect-[3/4] relative">
+                <Image
+                  src="/antes_depois_cleaning_sofa_2.jpeg"
+                  alt="Resultado da limpeza profissional de sofá"
+                  fill
+                  className="object-cover"
+                  quality={90}
+                />
+              </div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow">
-              <p className="text-lg font-semibold text-gray-800">🏠 Quem deseja receber visitas sem preocupação</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow">
-              <p className="text-lg font-semibold text-gray-800">💎 Quem quer conservar e prolongar a vida útil do estofado</p>
+            <div className="relative rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+              <div className="aspect-[3/4] relative">
+                <Image
+                  src="/antes_depois_cleaning_sofa_3.jpeg"
+                  alt="Estofado renovado após higienização"
+                  fill
+                  className="object-cover"
+                  quality={90}
+                />
+              </div>
             </div>
           </div>
-          <p className="text-lg text-gray-800 font-semibold text-center">
-            Se você se identificou com algum desses pontos, esse serviço é para você.
-          </p>
         </div>
       </section>
 
-      {/* Why Choose Us Section */}
-      <section id="porque" className="py-16 px-4 bg-gray-50 scroll-mt-16">
-        <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-12 text-center">
-            ⭐ Por que escolher a nossa empresa?
-          </h2>
-          
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
-            {/* Image Side */}
-            <div className="relative h-[600px] rounded-2xl overflow-hidden shadow-2xl order-2 lg:order-1">
+      {/* Impermeabilização Section */}
+      <section id="impermeabilizacao" className="py-16 px-4 bg-gray-50 scroll-mt-16">
+        <div className="container mx-auto max-w-5xl">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Impermeabilização de sofá
+              </h2>
+              <p className="text-lg text-gray-700">
+                Proteja seu estofado contra derramamentos: com a impermeabilização, líquidos formam gotas na superfície e não penetram no tecido, evitando manchas e facilitando a limpeza.
+              </p>
+            </div>
+            <div className="relative rounded-xl overflow-hidden shadow-lg bg-gray-100 aspect-[4/3] min-h-[280px]">
               <Image
-                src="/cleaning_machine.jpg"
-                alt="Equipamento profissional de limpeza"
+                src="/Impermeabilizacao_com_e_sem.jpg"
+                alt="Comparação: tecido com proteção impermeabilizante (gotas na superfície) e sem proteção (líquido absorvido)"
                 fill
-                className="object-cover"
+                className="object-contain"
                 quality={90}
               />
-              {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
             </div>
-            
-            {/* Content Side */}
-            <div className="order-1 lg:order-2">
-              <div className="space-y-4">
-                <div className="flex items-start gap-3 bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                  <span className="text-blue-600 text-xl flex-shrink-0">✔️</span>
-                  <span className="text-lg text-gray-700">Higienização profunda e profissional</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Recomendações Section - Carousel */}
+      <section id="recomendacoes" className="py-16 px-4 bg-white scroll-mt-16">
+        <div className="container mx-auto max-w-5xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 text-center">
+            O que nossos clientes dizem
+          </h2>
+          <p className="text-lg text-gray-700 mb-10 text-center max-w-2xl mx-auto">
+            Veja as recomendações de quem já contratou nossa higienização.
+          </p>
+          <div className="relative">
+            <div
+              ref={carouselRef}
+              data-recomendacoes-scroll
+              className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 -mx-2 px-2 md:-mx-4 md:px-4 [scrollbar-width:none] [-ms-overflow-style:none]"
+            >
+              {recomendacoes.map((r, i) => (
+                <div
+                  key={i}
+                  data-carousel-card
+                  className="flex-shrink-0 w-[85vw] sm:w-[75vw] md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] snap-center"
+                >
+                  <div className="bg-gray-50 p-6 rounded-xl shadow-md border border-gray-100 h-full">
+                    <p className="text-gray-700 mb-4 italic">
+                      &ldquo;{r.quote}&rdquo;
+                    </p>
+                    <p className="font-semibold text-gray-900">{r.name}</p>
+                    <p className="text-sm text-gray-500">{r.service}</p>
+                  </div>
                 </div>
-                <div className="flex items-start gap-3 bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                  <span className="text-blue-600 text-xl flex-shrink-0">✔️</span>
-                  <span className="text-lg text-gray-700">Produtos específicos para cada tipo de estofado</span>
-                </div>
-                <div className="flex items-start gap-3 bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                  <span className="text-blue-600 text-xl flex-shrink-0">✔️</span>
-                  <span className="text-lg text-gray-700">Tratamento personalizado para manchas e odores</span>
-                </div>
-                <div className="flex items-start gap-3 bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                  <span className="text-blue-600 text-xl flex-shrink-0">✔️</span>
-                  <span className="text-lg text-gray-700">Uso de sanitizante, ajudando a manter o estofado protegido</span>
-                </div>
-                <div className="flex items-start gap-3 bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                  <span className="text-blue-600 text-xl flex-shrink-0">✔️</span>
-                  <span className="text-lg text-gray-700">Produtos seguros para crianças e pets</span>
-                </div>
-                <div className="flex items-start gap-3 bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                  <span className="text-blue-600 text-xl flex-shrink-0">✔️</span>
-                  <span className="text-lg text-gray-700">Excelente custo-benefício</span>
-                </div>
-                <div className="flex items-start gap-3 bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                  <span className="text-blue-600 text-xl flex-shrink-0">✔️</span>
-                  <span className="text-lg text-gray-700">Atendimento profissional, transparente e de confiança</span>
-                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-center gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  const el = carouselRef.current;
+                  if (el) {
+                    const card = el.querySelector("[data-carousel-card]");
+                    const w = (card?.getBoundingClientRect().width ?? 0) + 24;
+                    el.scrollBy({ left: -w, behavior: "smooth" });
+                  }
+                }}
+                className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 transition-colors"
+                aria-label="Recomendações anterior"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="flex gap-1.5">
+                {recomendacoes.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                onClick={() => {
+                  const el = carouselRef.current;
+                  if (el) {
+                    const card = el.querySelector("[data-carousel-card]");
+                    const w = (card?.getBoundingClientRect().width ?? 0) + 24;
+                    el.scrollTo({ left: i * w, behavior: "smooth" });
+                  }
+                }}
+                    className={`w-2.5 h-2.5 rounded-full transition-colors ${i === carouselIndex ? "bg-blue-600" : "bg-gray-300 hover:bg-gray-400"}`}
+                    aria-label={`Ir para recomendação ${i + 1}`}
+                  />
+                ))}
               </div>
-              <p className="text-xl text-gray-800 font-bold text-center mt-8">
-                Aqui, cada estofado recebe o cuidado que merece.
-              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  const el = carouselRef.current;
+                  if (el) {
+                    const card = el.querySelector("[data-carousel-card]");
+                    const w = (card?.getBoundingClientRect().width ?? 0) + 24;
+                    el.scrollBy({ left: w, behavior: "smooth" });
+                  }
+                }}
+                className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 transition-colors"
+                aria-label="Próxima recomendação"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
       </section>
 
       {/* How It Works Section */}
-      <section id="como-funciona" className="py-16 px-4 bg-white scroll-mt-16">
+      <section id="como-funciona" className="py-16 px-4 bg-gray-50 scroll-mt-16">
         <div className="container mx-auto max-w-4xl">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">
-            🔄 Como funciona o atendimento?
+            Como funciona o atendimento?
           </h2>
           <div className="space-y-6 mb-8">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="flex items-start gap-4">
-                <span className="text-3xl font-bold text-blue-600">1️⃣</span>
+                <span className="text-3xl font-bold text-blue-600">1</span>
                 <div>
                   <p className="text-lg font-semibold text-gray-800 mb-2">Você entra em contato pelo WhatsApp</p>
                 </div>
@@ -400,7 +550,7 @@ export default function Home() {
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="flex items-start gap-4">
-                <span className="text-3xl font-bold text-blue-600">2️⃣</span>
+                <span className="text-3xl font-bold text-blue-600">2</span>
                 <div>
                   <p className="text-lg font-semibold text-gray-800 mb-2">Avaliamos seu estofado e sua necessidade</p>
                 </div>
@@ -408,7 +558,7 @@ export default function Home() {
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="flex items-start gap-4">
-                <span className="text-3xl font-bold text-blue-600">3️⃣</span>
+                <span className="text-3xl font-bold text-blue-600">3</span>
                 <div>
                   <p className="text-lg font-semibold text-gray-800 mb-2">Realizamos a higienização profissional no local</p>
                 </div>
@@ -416,7 +566,7 @@ export default function Home() {
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="flex items-start gap-4">
-                <span className="text-3xl font-bold text-blue-600">4️⃣</span>
+                <span className="text-3xl font-bold text-blue-600">4</span>
                 <div>
                   <p className="text-lg font-semibold text-gray-800 mb-2">Secagem rápida</p>
                 </div>
@@ -424,7 +574,7 @@ export default function Home() {
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="flex items-start gap-4">
-                <span className="text-3xl font-bold text-blue-600">5️⃣</span>
+                <span className="text-3xl font-bold text-blue-600">5</span>
                 <div>
                   <p className="text-lg font-semibold text-gray-800 mb-2">Estofado limpo, higienizado e renovado</p>
                 </div>
@@ -441,7 +591,7 @@ export default function Home() {
       <section id="duvidas" className="py-16 px-4 bg-gray-50 scroll-mt-16">
         <div className="container mx-auto max-w-4xl">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">
-            ❓ Dúvidas Frequentes
+            Dúvidas Frequentes
           </h2>
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow-md">
@@ -492,13 +642,13 @@ export default function Home() {
       <section id="contato" className="py-20 px-4 bg-gradient-to-br from-blue-600 to-cyan-600 text-white scroll-mt-16">
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            📲 Solicite seu orçamento agora mesmo
+            Solicite seu orçamento agora mesmo
           </h2>
           <p className="text-xl mb-8">
             Garanta um estofado limpo, higienizado e seguro para sua família.
           </p>
           <p className="text-lg mb-8">
-            👉 Clique no botão abaixo e fale conosco pelo WhatsApp
+            Clique no botão abaixo e fale conosco pelo WhatsApp
           </p>
           <Link
             href={whatsappLink}
@@ -512,22 +662,24 @@ export default function Home() {
             Falar no WhatsApp Agora
           </Link>
           <p className="text-xl mt-8 font-semibold">
-            🛋️ Seu estofado merece esse cuidado.
+            Seu estofado merece esse cuidado.
           </p>
         </div>
       </section>
 
+      </main>
+
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8 px-4">
+      <footer className="bg-sky-100 text-gray-800 py-8 px-4">
         <div className="container mx-auto max-w-4xl text-center">
           <Image
-            src="/logo-sbclean.png"
-            alt="SBClean Logo"
-            width={150}
-            height={60}
+            src="/logo_letter.png"
+            alt="SBClean - Lavagem a seco de estofados"
+            width={180}
+            height={70}
             className="mx-auto h-auto mb-4"
           />
-          <p className="text-gray-400">
+          <p className="text-gray-600">
             © {new Date().getFullYear()} SBClean - Higienização Profissional de Estofados
           </p>
         </div>

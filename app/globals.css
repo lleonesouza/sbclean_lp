@@ -28,3 +28,8 @@ body {
 * {
   scroll-behavior: smooth;
 }
+
+/* Esconder scrollbar no carrossel (webkit) */
+[data-recomendacoes-scroll]::-webkit-scrollbar {
+  display: none;
+}
